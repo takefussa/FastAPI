@@ -1,15 +1,22 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from dotenv import load_dotenv
 
-# PostgreSQLの接続情報
-# ここは実際の接続先情報に合わせてください
-path = 'postgresql+psycopg2://postgres:mysecretpassword@localhost:5433/study_management'
+# .env ファイルから環境変数を読み込む
+load_dotenv()
+
+# PostgreSQL の接続情報を環境変数から取得
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set in .env file.")
 
 # エンジンの作成（データベースに接続するためのエンジン）
 Engine = create_engine(
-    path,  # 接続するデータベースのURL
+    DATABASE_URL,  # 接続するデータベースのURL
     echo=False  # SQLの実行内容を表示しない
 )
 
-# Baseクラスを定義（モデルを定義するためのベースクラス）
+# Base クラスを定義（モデルを定義するためのベースクラス）
 Base = declarative_base()
