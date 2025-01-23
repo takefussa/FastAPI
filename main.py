@@ -1,10 +1,10 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
+
 from models import Project, Task
 from settings import Engine
-from sqlalchemy.orm import sessionmaker
 
 # FastAPI アプリケーションの作成
 app = FastAPI()
@@ -21,6 +21,7 @@ app.add_middleware(
 # セッション作成
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=Engine)
 
+
 # データベース接続を取得する依存関数
 def get_db():
     db = SessionLocal()
@@ -29,29 +30,35 @@ def get_db():
     finally:
         db.close()
 
+
 # Pydanticモデル: プロジェクトの作成
 class ProjectCreate(BaseModel):
     name: str
+
 
 # Pydanticモデル: タスクの作成
 class TaskCreate(BaseModel):
     name: str
     status: str = "Todo"
 
+
 # タスクの更新用スキーマを追加
 class UpdateTaskStatus(BaseModel):
     status: str
+
 
 # ルートエンドポイント
 @app.get("/")
 async def root():
     return {"message": "Hello World From Fast API!"}
 
+
 # プロジェクト一覧を取得するエンドポイント
 @app.get("/projects/")
 def read_projects(db: Session = Depends(get_db)):
     projects = db.query(Project).all()
     return projects
+
 
 # 新しいプロジェクトを作成するエンドポイント
 @app.post("/projects/")
@@ -61,6 +68,7 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(project_data)
     return project_data
+
 
 # プロジェクトを削除するエンドポイント
 @app.delete("/projects/{project_id}")
@@ -72,11 +80,13 @@ def delete_project(project_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": f"Project {project_id} has been deleted."}
 
+
 # プロジェクトに関連するタスク一覧を取得するエンドポイント
 @app.get("/projects/{project_id}/tasks/")
 def read_tasks_by_project(project_id: int, db: Session = Depends(get_db)):
     tasks = db.query(Task).filter(Task.project_id == project_id).all()
     return tasks
+
 
 # 新しいタスクを作成するエンドポイント
 @app.post("/projects/{project_id}/tasks/")
@@ -90,6 +100,7 @@ def create_task(project_id: int, task: TaskCreate, db: Session = Depends(get_db)
     db.refresh(task_data)
     return task_data
 
+
 # タスクを削除するエンドポイント
 @app.delete("/tasks/{task_id}")
 def delete_task(task_id: int, db: Session = Depends(get_db)):
@@ -99,6 +110,7 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.delete(task)
     db.commit()
     return {"message": f"Task {task_id} has been deleted."}
+
 
 # タスクの状態を更新するエンドポイント
 @app.put("/tasks/{task_id}")
